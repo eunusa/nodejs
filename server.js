@@ -52,8 +52,19 @@ app.post('/add',function(요청,응답){
     console.log(요청.body.date);
     console.log(요청.body.title);
 
-    db.collection('post').insertOne({날짜:요청.body.date,제목:요청.body.title},function(에러,결과){
-        console.log('저장완료');
+    db.collection('counter').findOne({name :"게시물갯수"}, function(에러,결과){
+        let 총게시물갯수 = 결과.totalPost;
+
+        db.collection('post').insertOne({_id : 총게시물갯수 + 1,날짜:요청.body.date,제목:요청.body.title},function(에러,결과){
+            console.log('저장완료');
+            db.collection('counter').updateOne({name:'게시물갯수'},{$inc :{totalPost:1}},function(에러,결과){
+                if(에러){return console.log(에러);}
+            }) //operator $set 변경, inc 증가, min 기존값보다 적을 때만 변경, rename key값 이름변경
+            // inc 1을 증가 시켜주세요.
+        
+    });
+
+    
     }); 
 
 
