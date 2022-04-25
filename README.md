@@ -8,3 +8,10 @@ node.js 설치
 4. npm install -g nodemon = 서버 파일 저장시 서버 리로드 도와줌
 5. npm install body-parser = form 데이터 서버로 쉽게 전송해 주는 라이브러리
       
+
+
+-에러 수정-
+node:internal/modules/cjs/loader:936
+  throw err;
+  ^
+  ->처리방법 : 터미널에서 npm lnstall 로 해결.(파일 이동이 문제가 되었다고 생각함)
