@@ -6,6 +6,9 @@ app.set('view engine', 'ejs'); //리스트 라이브러리
 
 app.use('/public', express.static('public'));// static을 사용하기위해서 /public 폴더에 넣는다.
 
+const methodOverride = require('method-override') //  method-override 라이브러리 method에 put delete 를 사용할수 있다.
+app.use(methodOverride('_method')) // method-override 라이브러리 method에 put delete 를 사용할수 있다.
+
 
 
 //데이터 입력시 필요함
@@ -81,7 +84,7 @@ app.delete('/delete',function(요청,응답){
 
 app.get('/list',function(요청,응답){
     
-    db.collection('post').find().toArray(function(에러,결과){
+    db.collection('post').find().toArray(function(에러,결과){ //toArray 모든 배열을 반환한다.
         console.log(결과);
         응답.render('list.ejs',{posts :결과}); //posts에 결과값을  넣을거다.
     }); //어디 디비를 사용할것이다.
@@ -95,6 +98,76 @@ app.get('/detail/:id',function(요청,응답){ // :를 붙이면 사용자가 /�
      db.collection('post').findOne({_id : parseInt(요청.params.id)},function(에러,결과){ //디비에서 id값 게시물을 찾는다.
         응답.render('detail.ejs',{data :결과});  //찾은 결과를 ejs에 데이터값을 넣는다.
         console.log(결과);
-              
+        
+        if(에러) return 응답.render('index.ejs');
+        
     })});
 
+app.get('/edit/:id',function(요청,응답){
+        db.collection('post').findOne({_id : parseInt(요청.params.id)},function(에러,결과){ //toArray 모든 배열을 반환한다.
+        
+        응답.render('edit.ejs',{posts :결과}); //posts에 결과값을  넣을거다.
+        console.log(결과);
+        })}); //어디 디비를 사용할것이다.
+    
+    //ejs파일은 항상 views에 넣어둔다.
+
+
+
+    /* 0428 수정중 */
+app.put('/edit',function(요청,응답){
+   db.collection('post').updateOne({_id: parseInt(요청.body.id)},{$set : {제목 : 요청.body.title, 날짜 : 요청.body.date}}, function(에러,결과){ 
+    //name으로 받은 데이터를 body로 받아온다.
+    console.log('수정완료');
+    응답.redirect('/list')
+
+   })});
+
+
+const passport = require('passport'); //라이브러리
+const LocalStrategy = require('passport-local').Strategy; //라이브러리
+const session = require('express-session');// 라이브러리
+
+
+app.use(session({secret : '비밀코드', resave : true, saveUninitialized: false}));
+app.use(passport.initialize());
+app.use(passport.session());  //미들웨어 요청과 응답 사이에 뭔가 실행시키는 코드, '비밀코드'에는 아무거나 적어주면된다.
+
+
+
+app.get('/login', function(요청,응답){
+    응답.render('login.ejs');
+})
+
+app.post('/login', passport.authenticate('local',{failureRedirect : '/fail'}), function(요청,응답){
+    응답.redirect('/');
+})
+
+passport.use(new LocalStrategy({
+    usernameField: 'id', //id 정의
+    passwordField: 'pw', //pw 정의
+    session: true, //세션정보를 저장할것인지 체크
+    passReqToCallback: false, // 추가 검증할때 콜백함수에 넣을수 있다.
+  }, function (입력한아이디, 입력한비번, done) {
+    //console.log(입력한아이디, 입력한비번);
+    db.collection('login').findOne({ id: 입력한아이디 }, function (에러, 결과) {
+      if (에러) return done(에러)
+  
+      if (!결과) return done(null, false, { message: '존재하지않는 아이디요' })
+      if (입력한비번 == 결과.pw) {
+        return done(null, 결과)// 첫번째 파라미터 서버에러, 두번째 파라미터일치할때 데이터를 보낸다 세번째파라미터 에러매세지 넣는것
+      } else {
+        return done(null, false, { message: '비번틀렸어요' })
+      }
+    })
+  }));
+
+  //세션 만들기
+
+  passport.serializeUser(function (user, done) { //아이디 비번 검증 성공시 user로 보냄
+    done(null, user.id)//세션 데이터를 만들고 세션의 id정보를 쿠키로 보냄
+  });
+  
+  passport.deserializeUser(function (아이디, done) {
+    done(null, {})
+  }); 
