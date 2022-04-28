@@ -7,7 +7,8 @@ node.js 설치
    powershell 에서 Set-ExecutionPolicy Unrestricted  입력
 4. npm install -g nodemon = 서버 파일 저장시 서버 리로드 도와줌
 5. npm install body-parser = form 데이터 서버로 쉽게 전송해 주는 라이브러리
-      
+6. npm install passport passport-local express-session 로그인, 세션 도와주는 라이브러리      
+7. npm install method-override = method를 put delete 전송을 도와주는 라이브러리 
 
 
 -에러 수정-
