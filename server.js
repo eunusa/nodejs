@@ -143,6 +143,21 @@ app.post('/login', passport.authenticate('local',{failureRedirect : '/fail'}), f
     응답.redirect('/');
 })
 
+app.get('/mypage', 로그인했니, function(요청,응답){ //'로그인했니' 미들웨어 사용
+    요청.user //deserializeUser 정보가 여기 다 담겨저 있음.
+    응답.render('mypage.ejs')
+  })
+
+function 로그인했니(요청, 응답, next){ //미들웨어 요청.user를 검사한다.
+    if(요청.user){ //로그인했으면 요청.user가 항상 있음.
+        next()
+    }else{
+        응답.send('로그인 안하셨는데요?')
+    }
+}
+
+
+
 passport.use(new LocalStrategy({
     usernameField: 'id', //id 정의
     passwordField: 'pw', //pw 정의
@@ -165,9 +180,15 @@ passport.use(new LocalStrategy({
   //세션 만들기
 
   passport.serializeUser(function (user, done) { //아이디 비번 검증 성공시 user로 보냄
-    done(null, user.id)//세션 데이터를 만들고 세션의 id정보를 쿠키로 보냄
+    done(null, user.id/* 1 */)//세션 데이터를 만들고 세션의 id정보를 쿠키로 보냄
   });
   
-  passport.deserializeUser(function (아이디, done) {
-    done(null, {})
+  passport.deserializeUser(function (아이디/* 1과 동일하다. */, done) {
+    db.collection('login').findOne({id : 아이디}, function(에러,결과){
+        done(null, 결과)  //로그인한 유저의 세션아이디를 바탕으로 개인정보를 db에서 찾는 역할,유저 이름 같은것을 마이페이지에 출력이 가능하다.
+
+    })
+    
   }); 
+
+
