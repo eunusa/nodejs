@@ -192,3 +192,21 @@ passport.use(new LocalStrategy({
   }); 
 
 
+app.get('/search', function(요청,응답){
+    console.log(요청.query);
+    let 검색조건 = [
+        {
+            $search: {
+              index: 'titileSearch', //만든 인덱스명
+              text: {
+                query: 요청.query.value,
+                path: '제목'  // 제목날짜 둘다 찾고 싶으면 ['제목', '날짜']
+              }
+            }
+          }
+    ];
+    db.collection('post').aggregate(검색조건).toArray((function(에러,결과){ //toArray 모든 배열을 반환한다.$text{$search} 는 indexes한 db를 사용할수 있다. aggraegate는 serch index사용할때 사용한다.
+        console.log(결과);
+        응답.render('search.ejs',{posts :결과}); //posts에 결과값을  넣을거다.
+    })); //어디 디비를 사용할것이다.
+});
