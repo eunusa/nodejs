@@ -54,32 +54,8 @@ app.get('/write',function(요청,응답){
 
 });
 
-app.post('/add',function(요청,응답){
-    응답.send('전송완료')
-    console.log(요청.body.date); //body-parser 라이브러리 설치해야지 데이터를 쉽게 처리 가능하다.
-    console.log(요청.body.title);
 
-    db.collection('counter').findOne({name :"게시물갯수"}, function(에러,결과){
-        let 총게시물갯수 = 결과.totalPost;
 
-        db.collection('post').insertOne({_id : 총게시물갯수 + 1,날짜:요청.body.date,제목:요청.body.title},function(에러,결과){
-            console.log('저장완료');
-            db.collection('counter').updateOne({name:'게시물갯수'},{$inc :{totalPost:1}},function(에러,결과){
-                if(에러){return console.log(에러);}
-            }) //operator $set 변경, inc 증가, min 기존값보다 적을 때만 변경, rename key값 이름변경
-            // inc 1을 증가 시켜주세요.
-        
-    });
-    }); 
-});
-
-app.delete('/delete',function(요청,응답){
-    요청.body._id = parseInt(요청.body._id); //parseInt로 '1' 정수로 변경해준다. 서버전송시 문자로 하면 안되고 정수로 변경해야된다.
-    db.collection('post').deleteOne(요청.body, function(에러,결과){
-        console.log('삭제완료');
-        응답.status(200).send({message : '성공했습니다'}); // 요청성공하면 200을 출력
-    })
-})
 
 
 app.get('/list',function(요청,응답){
@@ -103,25 +79,7 @@ app.get('/detail/:id',function(요청,응답){ // :를 붙이면 사용자가 /�
         
     })});
 
-app.get('/edit/:id',function(요청,응답){
-        db.collection('post').findOne({_id : parseInt(요청.params.id)},function(에러,결과){ //toArray 모든 배열을 반환한다.
-        
-        응답.render('edit.ejs',{posts :결과}); //posts에 결과값을  넣을거다.
-        console.log(결과);
-        })}); //어디 디비를 사용할것이다.
-    
-    //ejs파일은 항상 views에 넣어둔다.
 
-
-
-    /* 0428 수정중 */
-app.put('/edit',function(요청,응답){
-   db.collection('post').updateOne({_id: parseInt(요청.body.id)},{$set : {제목 : 요청.body.title, 날짜 : 요청.body.date}}, function(에러,결과){ 
-    //name으로 받은 데이터를 body로 받아온다.
-    console.log('수정완료');
-    응답.redirect('/list')
-
-   })});
 
 
 const passport = require('passport'); //라이브러리
@@ -190,6 +148,66 @@ passport.use(new LocalStrategy({
     })
     
   }); 
+//가입창은 passport 아래 있어야된다. 회원가입시 중복 검사를 해야한다(알파벳,또는 숫자), 비번 암호화
+app.post('/register',function(요청,응답){
+    db.collection('login').insertOne({id : 요청.body.id, pw : 요청.body.pw},function(에러,결과){응답.redirect('/')})
+});
+
+//회원과 관련된 기능은 passport 아래로 내린다.
+app.post('/add',function(요청,응답){
+    //요청.user 현재 로그인한 사람의 정보가 들어있음.
+   응답.send('전송완료')
+   console.log(요청.body.date); //body-parser 라이브러리 설치해야지 데이터를 쉽게 처리 가능하다.
+   console.log(요청.body.title);
+
+   db.collection('counter').findOne({name :"게시물갯수"}, function(에러,결과){
+       let 총게시물갯수 = 결과.totalPost;
+       let 저장할거 = {_id : 총게시물갯수 + 1,날짜:요청.body.date,제목:요청.body.title,작성자:요청.user._id}
+       db.collection('post').insertOne(저장할거,function(에러,결과){
+           console.log('저장완료');
+           db.collection('counter').updateOne({name:'게시물갯수'},{$inc :{totalPost:1}},function(에러,결과){
+               if(에러){return console.log(에러);}
+           }) //operator $set 변경, inc 증가, min 기존값보다 적을 때만 변경, rename key값 이름변경
+           // inc 1을 증가 시켜주세요.
+       
+   });
+   }); 
+});
+
+app.delete('/delete',function(요청,응답){
+    요청.body._id = parseInt(요청.body._id); //parseInt로 '1' 정수로 변경해준다. 서버전송시 문자로 하면 안되고 정수로 변경해야된다.
+  
+    let 삭제할데이터 = {_id : 요청.body._id, 작성자 : 요청.user._id }
+
+    db.collection('post').deleteOne(삭제할데이터, function(에러,결과){
+        console.log('삭제완료');
+        if(에러) console.log(에러);
+        응답.status(200).send({message : '성공했습니다'}); // 요청성공하면 200을 출력
+    })
+});
+
+app.get('/edit/:id',function(요청,응답){
+    db.collection('post').findOne({_id : parseInt(요청.params.id)},function(에러,결과){ //toArray 모든 배열을 반환한다.
+    
+    응답.render('edit.ejs',{posts :결과}); //posts에 결과값을  넣을거다.
+    console.log(결과);
+    })}); //어디 디비를 사용할것이다.
+
+//ejs파일은 항상 views에 넣어둔다.
+
+
+
+/* 0428 수정중 */
+app.put('/edit',function(요청,응답){
+
+    let 수정할것 = {_id: parseInt(요청.body.id), 작성자 : 요청.user._id}
+
+    db.collection('post').updateOne(수정할것,{$set : {제목 : 요청.body.title, 날짜 : 요청.body.date}}, function(에러,결과){ 
+//name으로 받은 데이터를 body로 받아온다. 수정할때는 $set 연산자 사용.
+console.log('수정완료');
+응답.redirect('/list')
+
+})});
 
 
 app.get('/search', function(요청,응답){
@@ -203,7 +221,13 @@ app.get('/search', function(요청,응답){
                 path: '제목'  // 제목날짜 둘다 찾고 싶으면 ['제목', '날짜']
               }
             }
-          }
+          },
+
+          { $sort : { _id : 1 } }, //결과를 정렬해서 가져온다.
+          { $limit : 10 }, // 결과를 제한한다. 맨위 10개만 가져온다.
+          { $project : { 제목 : 1, _id : 0 } }// 찾아온결과중 원하는 항목만을 모여준다.
+
+
     ];
     db.collection('post').aggregate(검색조건).toArray((function(에러,결과){ //toArray 모든 배열을 반환한다.$text{$search} 는 indexes한 db를 사용할수 있다. aggraegate는 serch index사용할때 사용한다.
         console.log(결과);
