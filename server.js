@@ -234,3 +234,13 @@ app.get('/search', function(요청,응답){
         응답.render('search.ejs',{posts :결과}); //posts에 결과값을  넣을거다.
     })); //어디 디비를 사용할것이다.
 });
+
+
+
+ //require('파일경로')/('라이브러리명') 입력가능
+//. <- 경로앞에 붙이는게 nodejs 국룰 */
+
+app.use('/shop', require('./route/shop.js')) //미들웨어 사용
+// /shop에 라우팅을하면 라우터에서 주소를 붙여서 실행할 수 있다.
+//shop에 관련된 라우팅이라고 판단할 수 있어 유지보수가 쉬워진다.
+app.use('/board/sub',require('./route/board.js'))
