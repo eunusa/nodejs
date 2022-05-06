@@ -9,6 +9,7 @@ node.js 설치
 5. npm install body-parser = form 데이터 서버로 쉽게 전송해 주는 라이브러리
 6. npm install passport passport-local express-session 로그인, 세션 도와주는 라이브러리      
 7. npm install method-override = method를 put delete 전송을 도와주는 라이브러리 
+8. npm install multer = 업로드된 파일을 매우 쉽게 저장, 이름변경, 처리할 수 있게 도와주는 라이브러리
 
 
 -에러 수정-
